@@ -41,36 +41,16 @@ function msToAmount(s){
 	return 1-(1/(Math.pow(1.08,Math.sqrt(s))));
 }
 
-
-let setTimerForSpeedTest = setInterval(function(){
-				initUI();
-				data=null;
-				//run the internet test every 30 min
-				w=new Worker('speedtest_worker.min.js');
-				w.postMessage('start {"telemetry_level":"basic"}'); //Add optional parameters as a JSON object to this command
-				I("startStopBtn").className="running";
-				w.onmessage=function(e){
-					data=e.data.split(';');
-					var status=Number(data[0]);
-					if(status>=4){
-						//test completed
-						I("startStopBtn").className="";
-						w=null;
-						updateUI(true);
-					}
-				};
-			}
-				, 18000);
-
-// to break out of the setInterval timer
+// to break out of the setInterval and stop the test run
 function stopTimerForSpeedTest (){
-	clearInterval(setTimerForSpeedTest);
+	clearTimeout(startStop);
 }
 
 
 //SPEEDTEST AND UI CODE
 var w=null; //speedtest worker
 var data=null; //data from worker
+
 
 function startStop(){
 	if(w!=null){
@@ -97,8 +77,9 @@ function startStop(){
 				updateUI(true);
 			}
 		};
-		setTimerForSpeedTest();
-	}
+	};
+	//set time that test will run periodically
+	setTimeout(startStop,18000);
 }
 //this function reads the data sent back by the worker and updates the UI
 function updateUI(forced){
