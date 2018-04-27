@@ -62,6 +62,7 @@ let setTimerForSpeedTest = setInterval(function(){
 			}
 				, 18000);
 
+// to break out of the setInterval timer
 function stopTimerForSpeedTest (){
 	clearInterval(setTimerForSpeedTest);
 }
@@ -70,18 +71,6 @@ function stopTimerForSpeedTest (){
 //SPEEDTEST AND UI CODE
 var w=null; //speedtest worker
 var data=null; //data from worker
-
-/*function Stop(){
-	if(w!=null){
-		//speedtest is running, abort
-		w.postMessage('abort');
-		w=null;
-		data=null;
-		I("startStopBtn").className="";
-		stopTimerForSpeedTest();
-		initUI();
-}*/
-
 
 function startStop(){
 	if(w!=null){
