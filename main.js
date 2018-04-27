@@ -34,16 +34,13 @@ function drawMeter(c,amount,bk,fg,progress,prog){
 		ctx.fillRect(c.width*0.3,c.height-16*sizScale,c.width*0.4*progress,4*sizScale);
 	}
 }
+
 function mbpsToAmount(s){
 	return 1-(1/(Math.pow(1.3,Math.sqrt(s))));
 }
+
 function msToAmount(s){
 	return 1-(1/(Math.pow(1.08,Math.sqrt(s))));
-}
-
-// to break out of the setInterval and stop the test run
-function stopTimerForSpeedTest (){
-	clearTimeout(startStop);
 }
 
 
@@ -51,36 +48,34 @@ function stopTimerForSpeedTest (){
 var w=null; //speedtest worker
 var data=null; //data from worker
 
-
 function startStop(){
-	if(w!=null){
-		//speedtest is running, abort
-		w.postMessage('abort');
-		w=null;
-		data=null;
-		I("startStopBtn").className="";
-		stopTimerForSpeedTest();
-		initUI();
-	}else{
+	console.log("startstop- test running");
 
-		//test is not running, begin
+		if(w!=null){
+			//speedtest is running, abort
+			w.postMessage('abort');
+			initUI();
+		}
+		// run speed test
 		w=new Worker('speedtest_worker.min.js');
 		w.postMessage('start {"telemetry_level":"basic"}'); //Add optional parameters as a JSON object to this command
-		I("startStopBtn").className="running";
+		//I("startStopBtn").className="running";
 		w.onmessage=function(e){
 			data=e.data.split(';');
 			var status=Number(data[0]);
 			if(status>=4){
 				//test completed
-				I("startStopBtn").className="";
 				w=null;
 				updateUI(true);
 			}
 		};
-	};
-	//set time that test will run periodically
-	setTimeout(startStop,18000);
 }
+
+//set time that test will run periodically - test run every 3min and terminates after 15min
+startStop();
+let timeInterval = setInterval(startStop, 300000);
+setTimeout(()=>{clearInterval(timeInterval); console.log("test stopped")}, 900000);
+
 //this function reads the data sent back by the worker and updates the UI
 function updateUI(forced){
 	if(!forced&&(!data||!w)) return;
@@ -95,20 +90,25 @@ function updateUI(forced){
 	I("jitText").textContent=data[5];
 	drawMeter(I("jitMeter"),msToAmount(Number(data[5]*(status==2?oscillate():1))),meterBk,jitColor,Number(data[8]),progColor);
 }
+
 function oscillate(){
 	return 1+0.02*Math.sin(Date.now()/100);
 }
+
 //poll the status from the worker (this will call updateUI)
 setInterval(function(){
 	if(w) w.postMessage('status');
 },200);
+
 //update the UI every frame
 window.requestAnimationFrame=window.requestAnimationFrame||window.webkitRequestAnimationFrame||window.mozRequestAnimationFrame||window.msRequestAnimationFrame||(function(callback,element){setTimeout(callback,1000/60);});
 function frame(){
 	requestAnimationFrame(frame);
 	updateUI();
 }
+
 frame(); //start frame loop
+
 //function to (re)initialize UI
 function initUI(){
 	drawMeter(I("dlMeter"),0,meterBk,dlColor,0);
