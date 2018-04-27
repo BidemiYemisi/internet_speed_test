@@ -41,36 +41,8 @@ function msToAmount(s){
 	return 1-(1/(Math.pow(1.08,Math.sqrt(s))));
 }
 
-//SPEEDTEST AND UI CODE
-var w=null; //speedtest worker
-var data=null; //data from worker
-function startStop(){
 
-	//alert("Hello");
-	if(w!=null){
-		//speedtest is running, abort
-		w.postMessage('abort');
-		w=null;
-		data=null;
-		I("startStopBtn").className="";
-		initUI();
-	}else{
-
-		//test is not running, begin
-		w=new Worker('speedtest_worker.min.js');
-		w.postMessage('start {"telemetry_level":"basic"}'); //Add optional parameters as a JSON object to this command
-		I("startStopBtn").className="running";
-		w.onmessage=function(e){
-			data=e.data.split(';');
-			var status=Number(data[0]);
-			if(status>=4){
-				//test completed
-				I("startStopBtn").className="";
-				w=null;
-				updateUI(true);
-			}
-		};
-			setInterval(function(){
+let setTimerForSpeedTest = setInterval(function(){
 				initUI();
 				data=null;
 				//run the internet test every 30 min
@@ -88,11 +60,43 @@ function startStop(){
 					}
 				};
 			}
-				, 180000);
+				, 18000);
+
+function stopTimerForSpeedTest (){
+	clearInterval(setTimerForSpeedTest);
+}
+
+
+//SPEEDTEST AND UI CODE
+var w=null; //speedtest worker
+var data=null; //data from worker
+
+/*function Stop(){
+	if(w!=null){
+		//speedtest is running, abort
+		w.postMessage('abort');
+		w=null;
+		data=null;
+		I("startStopBtn").className="";
+		stopTimerForSpeedTest();
+		initUI();
+}*/
+
+
+function startStop(){
+	if(w!=null){
+		//speedtest is running, abort
+		w.postMessage('abort');
+		w=null;
+		data=null;
+		I("startStopBtn").className="";
+		stopTimerForSpeedTest();
+		initUI();
+	}else{
 
 		//test is not running, begin
 		w=new Worker('speedtest_worker.min.js');
-		w.postMessage('start'); //Add optional parameters as a JSON object to this command
+		w.postMessage('start {"telemetry_level":"basic"}'); //Add optional parameters as a JSON object to this command
 		I("startStopBtn").className="running";
 		w.onmessage=function(e){
 			data=e.data.split(';');
@@ -104,6 +108,7 @@ function startStop(){
 				updateUI(true);
 			}
 		};
+		setTimerForSpeedTest();
 	}
 }
 //this function reads the data sent back by the worker and updates the UI
